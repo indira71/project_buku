@@ -97,13 +97,12 @@ export const addExemplar = async (req, res) => {
       return res.status(404).json({ message: 'Buku tidak ditemukan' });
     }
     
-    // Set default values menggunakan konstanta STATUS
     if (!exemplarData.status) {
-      exemplarData.status = STATUS.TERSEDIA; // Default: ST01 - Tersedia
+      exemplarData.status = STATUS.TERSEDIA;
     }
     
     if (exemplarData.opac === undefined) {
-      exemplarData.opac = '1'; // Default: Tampil di OPAC
+      exemplarData.opac = '1';
     }
     
     const newExemplar = await createExemplar(exemplarData);
@@ -131,7 +130,6 @@ export const editExemplar = async (req, res) => {
       return res.status(404).json({ message: 'Eksemplar tidak ditemukan' });
     }
     
-    // Cek apakah buku ada jika buku_id diubah
     if (exemplarData.buku_id) {
       const book = await getBookById(exemplarData.buku_id);
       if (!book) {
@@ -166,8 +164,7 @@ export const removeExemplar = async (req, res) => {
     if (!existingExemplar) {
       return res.status(404).json({ message: 'Eksemplar tidak ditemukan' });
     }
-    
-    // Cek apakah eksemplar sedang dipinjam menggunakan konstanta
+
     if (existingExemplar.status === STATUS.DIPINJAM) {
       return res.status(400).json({ message: 'Eksemplar sedang dipinjam, tidak dapat dihapus' });
     }
@@ -189,7 +186,6 @@ export const getExemplarsByBooks = async (req, res) => {
   try {
     const { bookId } = req.params;
     
-    // Cek apakah buku ada
     const book = await getBookById(bookId);
     if (!book) {
       return res.status(404).json({ message: 'Buku tidak ditemukan' });
@@ -215,7 +211,6 @@ export const getAvailableExemplarsByBook = async (req, res) => {
   try {
     const { bookId } = req.params;
     
-    // Cek apakah buku ada
     const book = await getBookById(bookId);
     if (!book) {
       return res.status(404).json({ message: 'Buku tidak ditemukan' });
@@ -246,7 +241,6 @@ export const updateExemplarStatusOnly = async (req, res) => {
       return res.status(400).json({ message: 'Status wajib diisi' });
     }
     
-    // Validasi status (harus salah satu dari ST01, ST02, ST03, ST04)
     const validStatuses = Object.values(STATUS);
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ 

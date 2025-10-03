@@ -1,4 +1,5 @@
 import pool from "../config/database.js";
+import { v4 as uuidv4 } from "uuid";
 
 export const createLending = async (lendingData) => {
   const {
@@ -10,14 +11,17 @@ export const createLending = async (lendingData) => {
     pengguna_id,
   } = lendingData;
 
+  const id = uuidv4();
+
   try {
     const [result] = await pool.execute(
       `
       INSERT INTO peminjaman 
-      (tanggal_pinjam, tenggat_kembali, keterangan, status_id, buku_id, pengguna_id, created_at, created_by) 
-      VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)
+      (id, tanggal_pinjam, tenggat_kembali, keterangan, status_id, buku_id, pengguna_id, created_at, created_by) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)
     `,
       [
+        id,
         tanggal_pinjam,
         tenggat_kembali,
         keterangan,
@@ -57,10 +61,9 @@ export const getLendingsByUser = async (userId) => {
   }
 };
 
-export const getAllLendings = async (limit = 10, offset = 0) => {
+export const getAllLendings = async (limit = 10, offset = 0, search = "") => {
   try {
-    const [rows] = await pool.execute(
-      `
+    let query = `
       SELECT p.*, b.judul as buku_judul, s.nama as status_nama,
              u.nama as pengguna_nama
       FROM peminjaman p 
@@ -68,17 +71,28 @@ export const getAllLendings = async (limit = 10, offset = 0) => {
       LEFT JOIN status s ON p.status_id = s.id 
       LEFT JOIN pengguna u ON p.pengguna_id = u.id
       WHERE p.is_deleted = 0
-      ORDER BY p.created_at DESC
-      LIMIT ? OFFSET ?
-    `,
-      [limit, offset]
-    );
+    `;
+    let params = [];
+
+    // kalau mau pencarian (misalnya cari judul buku / nama pengguna)
+    if (search) {
+      query += ` AND (b.judul LIKE ? OR u.nama LIKE ?)`;
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    const offsetInt = parseInt(offset) || 0;
+    const limitInt = parseInt(limit) || 10;
+
+    query += ` ORDER BY p.created_at DESC LIMIT ${offsetInt}, ${limitInt}`;
+
+    const [rows] = await pool.execute(query, params);
     return rows;
   } catch (error) {
     console.error("Error getting all lendings:", error);
     throw error;
   }
 };
+
 
 export const getLendingById = async (id) => {
   try {

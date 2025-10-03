@@ -25,16 +25,40 @@ export const getStatusById = async (id) => {
   }
 };
 
+// Helper function untuk generate ID status
+const generateStatusId = async () => {
+  try {
+    const [rows] = await pool.execute(
+      "SELECT id FROM status WHERE id LIKE 'ST%' ORDER BY id DESC LIMIT 1"
+    );
+    
+    if (rows.length === 0) {
+      return 'ST01';
+    }
+    
+    const lastId = rows[0].id;
+    const lastNumber = parseInt(lastId.substring(2));
+    const newNumber = lastNumber + 1;
+    
+    return `ST${newNumber.toString().padStart(2, '0')}`;
+  } catch (error) {
+    console.error('Error generating status ID:', error);
+    throw error;
+  }
+};
+
 export const createStatus = async (statusData) => {
   const { nama } = statusData;
   
   try {
-    const [result] = await pool.execute(
-      'INSERT INTO status (nama, created_at, created_by) VALUES (?, NOW(), ?)',
-      [nama, 'system']
+    const newId = await generateStatusId();
+    
+    await pool.execute(
+      'INSERT INTO status (id, nama, created_at, created_by) VALUES (?, ?, NOW(), ?)',
+      [newId, nama, 'system']
     );
     
-    return { id: result.insertId, ...statusData };
+    return { id: newId, nama };
   } catch (error) {
     console.error('Error creating status:', error);
     throw error;

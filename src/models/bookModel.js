@@ -1,4 +1,5 @@
 import pool from "../config/database.js";
+import { v4 as uuidv4 } from "uuid";
 
 export const getAllBooks = async (limit = 10, offset = 0, search = "") => {
   try {
@@ -65,16 +66,19 @@ export const createBook = async (bookData) => {
     status_id,
   } = bookData;
 
+  const id = uuidv4();
+
   try {
     const [result] = await pool.execute(
       `
       INSERT INTO buku 
-      (judul, edisi, penerbit, deskripsi_fisik, sinopsis, lokasi_ruangan, 
+      (id, judul, edisi, penerbit, deskripsi_fisik, sinopsis, lokasi_ruangan, 
        tanggal_pengadaan, bentuk_fisik, jenis_sumber, akses_pinjam, 
        kategori_id, status_id, created_at, created_by) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)
     `,
       [
+        id,
         judul,
         edisi,
         penerbit,

@@ -25,16 +25,44 @@ export const getCategoryById = async (id) => {
   }
 };
 
+// Helper function untuk generate ID kategori
+const generateCategoryId = async () => {
+  try {
+    // Ambil ID terakhir
+    const [rows] = await pool.execute(
+      "SELECT id FROM kategori WHERE id LIKE 'KT%' ORDER BY id DESC LIMIT 1"
+    );
+    
+    if (rows.length === 0) {
+      return 'KT01'; // ID pertama jika belum ada data
+    }
+    
+    // Extract nomor dari ID terakhir (misal: KT04 -> 4)
+    const lastId = rows[0].id;
+    const lastNumber = parseInt(lastId.substring(2));
+    const newNumber = lastNumber + 1;
+    
+    // Format dengan leading zero (KT05, KT06, dst)
+    return `KT${newNumber.toString().padStart(2, '0')}`;
+  } catch (error) {
+    console.error('Error generating category ID:', error);
+    throw error;
+  }
+};
+
 export const createCategory = async (categoryData) => {
   const { nama } = categoryData;
   
   try {
-    const [result] = await pool.execute(
-      'INSERT INTO kategori (nama, created_at, created_by) VALUES (?, NOW(), ?)',
-      [nama, 'system']
+    // Generate ID otomatis
+    const newId = await generateCategoryId();
+    
+    await pool.execute(
+      'INSERT INTO kategori (id, nama, created_at, created_by) VALUES (?, ?, NOW(), ?)',
+      [newId, nama, 'system']
     );
     
-    return { id: result.insertId, ...categoryData };
+    return { id: newId, nama };
   } catch (error) {
     console.error('Error creating category:', error);
     throw error;

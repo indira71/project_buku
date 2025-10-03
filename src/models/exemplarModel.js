@@ -1,11 +1,12 @@
 import pool from '../config/database.js';
+import { v4 as uuidv4 } from "uuid";
 
-export const getAllExemplars = async (limit = 10, offset = 0, search = '', bookId = null) => {
+export const getAllExemplars = async (limit = 10, offset = 0, search = "", bookId = null) => {
   try {
     let query = `
-      SELECT e.*, b.judul as buku_judul, s.nama as status_nama 
-      FROM eksemplar e 
-      LEFT JOIN buku b ON e.buku_id = b.id 
+      SELECT e.*, b.judul as buku_judul, s.nama as status_nama
+      FROM eksemplar e
+      LEFT JOIN buku b ON e.buku_id = b.id
       LEFT JOIN status s ON e.status = s.id
       WHERE e.is_deleted = 0
     `;
@@ -21,13 +22,16 @@ export const getAllExemplars = async (limit = 10, offset = 0, search = '', bookI
       params.push(bookId);
     }
 
-    query += ` ORDER BY e.created_at DESC LIMIT ? OFFSET ?`;
-    params.push(limit, offset);
+    const offsetInt = parseInt(offset) || 0;
+    const limitInt = parseInt(limit) || 10;
+
+    // Sama kayak getAllBooks → limit langsung diinject ke query, bukan pakai `?`
+    query += ` ORDER BY e.created_at DESC LIMIT ${offsetInt}, ${limitInt}`;
 
     const [rows] = await pool.execute(query, params);
     return rows;
   } catch (error) {
-    console.error('Error getting all exemplars:', error);
+    console.error("Error getting all exemplars:", error);
     throw error;
   }
 };
@@ -73,12 +77,14 @@ export const createExemplar = async (exemplarData) => {
       throw new Error('Nomor induk sudah ada');
     }
 
+    const id = uuidv4();
+
     const [result] = await pool.execute(`
       INSERT INTO eksemplar 
-      (nomor_induk, status, opac, buku_id, created_at, created_by) 
-      VALUES (?, ?, ?, ?, NOW(), ?)
-    `, [nomor_induk, status, opac, buku_id, 'system']);
-    
+      (id, nomor_induk, status, opac, buku_id, created_at, created_by) 
+      VALUES (?, ?, ?, ?, ?, NOW(), ?)
+    `, [id, nomor_induk, status, opac, buku_id, 'system']);
+
     return { id: result.insertId, ...exemplarData };
   } catch (error) {
     console.error('Error creating exemplar:', error);
