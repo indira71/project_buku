@@ -8,6 +8,7 @@ import categoryRoutes from "./src/routes/categoryRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import statusRoutes from "./src/routes/statusRoutes.js";
 import exemplarRoutes from './src/routes/exemplarRoutes.js';
+import subjekRoutes from './src/routes/subjekRoutes.js';
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/status", statusRoutes);
 app.use('/api/exemplars', exemplarRoutes);
+app.use('/api/subjeks', subjekRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
